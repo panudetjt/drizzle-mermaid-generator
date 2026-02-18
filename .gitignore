@@ -1,3 +1,7 @@
 node_modules
 dist
-*.generated.dbml
+*.generated.mermaid
+
+.claude
+.chief
+CLAUDE.md

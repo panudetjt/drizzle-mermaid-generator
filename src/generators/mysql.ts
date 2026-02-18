@@ -1,4 +1,4 @@
-import { BaseGenerator, writeDBMLFile } from "./common";
+import { BaseGenerator, writeMermaidFile } from "./common";
 import { is } from "drizzle-orm";
 import { MySqlColumnWithAutoIncrement } from "drizzle-orm/mysql-core";
 import { MySqlInlineForeignKeys } from "@/symbols";
@@ -26,7 +26,7 @@ class MySqlGenerator extends BaseGenerator<MySqlSchema, AnyMySqlColumn> {
 
 export function mysqlGenerate<T>(options: Options<T>): string {
   options.relational ||= false;
-  const dbml = new MySqlGenerator(options.schema as MySqlSchema, options.relational).generate();
-  if (options.out) writeDBMLFile(dbml, options.out);
-  return dbml;
+  const mermaid = new MySqlGenerator(options.schema as MySqlSchema, options.relational).generate();
+  if (options.out) writeMermaidFile(mermaid, options.out);
+  return mermaid;
 }

@@ -1,5 +1,4 @@
-import { DBML } from "@/dbml";
-import { BaseGenerator, writeDBMLFile } from "./common";
+import { BaseGenerator, writeMermaidFile } from "./common";
 import { PgInlineForeignKeys } from "@/symbols";
 import { CasingCache } from "drizzle-orm/casing";
 import type { BuildQueryConfig } from "drizzle-orm";
@@ -19,21 +18,16 @@ class PgGenerator extends BaseGenerator<PgSchema, AnyPgColumn> {
     return column.getSQLType().includes("serial");
   }
 
-  protected override generateEnum(enum_: PgEnum<[string, ...string[]]>) {
-    const dbml = new DBML().insert("enum ").escapeSpaces(enum_.enumName).insert(" {").newLine();
-
-    for (let i = 0; i < enum_.enumValues.length; i++) {
-      dbml.tab().escapeSpaces(enum_.enumValues[i]).newLine();
-    }
-
-    dbml.insert("}");
-    return dbml.build();
+  protected override generateEnum(_enum_: PgEnum<[string, ...string[]]>): string {
+    // Enums are not rendered as separate entities in Mermaid
+    // Column type normalization handles this by returning "enum" type
+    return "";
   }
 }
 
 export function pgGenerate<T>(options: Options<T>): string {
   options.relational ||= false;
-  const dbml = new PgGenerator(options.schema as PgSchema, options.relational).generate();
-  if (options.out) writeDBMLFile(dbml, options.out);
-  return dbml;
+  const mermaid = new PgGenerator(options.schema as PgSchema, options.relational).generate();
+  if (options.out) writeMermaidFile(mermaid, options.out);
+  return mermaid;
 }

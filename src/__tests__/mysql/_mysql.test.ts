@@ -61,7 +61,7 @@ async function typesTest() {
   });
 
   const schema = { myTable };
-  const out = `${pathPrefix}types.generated.dbml`;
+  const out = `${pathPrefix}types.generated.mermaid`;
   mysqlGenerate({ schema, out });
 
   const result = await compareContents(out);
@@ -81,7 +81,7 @@ async function constraintsTest() {
   });
 
   const schema = { myTable };
-  const out = `${pathPrefix}constraints.generated.dbml`;
+  const out = `${pathPrefix}constraints.generated.mermaid`;
   mysqlGenerate({ schema, out });
 
   const result = await compareContents(out);
@@ -103,7 +103,7 @@ async function inlineFkTest() {
   });
 
   const schema = { users, posts };
-  const out = `${pathPrefix}inline-fk.generated.dbml`;
+  const out = `${pathPrefix}inline-fk.generated.mermaid`;
   mysqlGenerate({ schema, out });
 
   const result = await compareContents(out);
@@ -132,7 +132,7 @@ async function fkTest() {
   );
 
   const schema = { users, posts };
-  const out = `${pathPrefix}fk.generated.dbml`;
+  const out = `${pathPrefix}fk.generated.mermaid`;
   mysqlGenerate({ schema, out });
 
   const result = await compareContents(out);
@@ -159,7 +159,7 @@ async function indexesTest() {
   );
 
   const schema = { table };
-  const out = `${pathPrefix}indexes.generated.dbml`;
+  const out = `${pathPrefix}indexes.generated.mermaid`;
   mysqlGenerate({ schema, out });
 
   const result = await compareContents(out);
@@ -178,7 +178,7 @@ async function schemasTest() {
   });
 
   const schema = { schema1, schema2, table1, table2 };
-  const out = `${pathPrefix}schemas.generated.dbml`;
+  const out = `${pathPrefix}schemas.generated.mermaid`;
   mysqlGenerate({ schema, out });
 
   const result = await compareContents(out);
@@ -230,7 +230,7 @@ async function rqbTest() {
     items,
     itemsRelations,
   };
-  const out = `${pathPrefix}relations.generated.dbml`;
+  const out = `${pathPrefix}relations.generated.mermaid`;
   const relational = true;
   mysqlGenerate({ schema, out, relational });
 
@@ -259,7 +259,7 @@ async function schemasRQBTest() {
   }));
 
   const schema = { schema1, schema2, table1, table1Relations, table2, table2Relations };
-  const out = `${pathPrefix}schemas-rqb.generated.dbml`;
+  const out = `${pathPrefix}schemas-rqb.generated.mermaid`;
   mysqlGenerate({ schema, out });
 
   const result = await compareContents(out);
@@ -362,7 +362,7 @@ async function realTest() {
     likes,
     likesRelations,
   };
-  const out = `${pathPrefix}real.generated.dbml`;
+  const out = `${pathPrefix}real.generated.mermaid`;
   mysqlGenerate({ schema, out });
 
   const result = await compareContents(out);

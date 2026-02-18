@@ -26,7 +26,7 @@ async function typesTest() {
   });
 
   const schema = { myTable };
-  const out = `${pathPrefix}types.generated.dbml`;
+  const out = `${pathPrefix}types.generated.mermaid`;
   sqliteGenerate({ schema, out });
 
   const result = await compareContents(out);
@@ -46,7 +46,7 @@ async function constraintsTest() {
   });
 
   const schema = { myTable };
-  const out = `${pathPrefix}constraints.generated.dbml`;
+  const out = `${pathPrefix}constraints.generated.mermaid`;
   sqliteGenerate({ schema, out });
 
   const result = await compareContents(out);
@@ -68,7 +68,7 @@ async function inlineFkTest() {
   });
 
   const schema = { users, posts };
-  const out = `${pathPrefix}inline-fk.generated.dbml`;
+  const out = `${pathPrefix}inline-fk.generated.mermaid`;
   sqliteGenerate({ schema, out });
 
   const result = await compareContents(out);
@@ -97,7 +97,7 @@ async function fkTest() {
   );
 
   const schema = { users, posts };
-  const out = `${pathPrefix}fk.generated.dbml`;
+  const out = `${pathPrefix}fk.generated.mermaid`;
   sqliteGenerate({ schema, out });
 
   const result = await compareContents(out);
@@ -124,7 +124,7 @@ async function indexesTest() {
   );
 
   const schema = { table };
-  const out = `${pathPrefix}indexes.generated.dbml`;
+  const out = `${pathPrefix}indexes.generated.mermaid`;
   sqliteGenerate({ schema, out });
 
   const result = await compareContents(out);
@@ -176,7 +176,7 @@ async function rqbTest() {
     items,
     itemsRelations,
   };
-  const out = `${pathPrefix}relations.generated.dbml`;
+  const out = `${pathPrefix}relations.generated.mermaid`;
   const relational = true;
   sqliteGenerate({ schema, out, relational });
 
@@ -284,7 +284,7 @@ async function realTest() {
     likes,
     likesRelations,
   };
-  const out = `${pathPrefix}real.generated.dbml`;
+  const out = `${pathPrefix}real.generated.mermaid`;
   sqliteGenerate({ schema, out });
 
   const result = await compareContents(out);

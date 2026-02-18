@@ -1,0 +1,15 @@
+erDiagram
+
+    users {
+        serial id PK "not null, increment"
+        int config_id
+    }
+    user_config {
+        serial id PK "not null, increment"
+    }
+    items {
+        serial id PK "not null, increment"
+        int sold_by_id "not null"
+    }
+users ||--|| user_config : "user_config-users"
+items ||--o{ users : "items-users"

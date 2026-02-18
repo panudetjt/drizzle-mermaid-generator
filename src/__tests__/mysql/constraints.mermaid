@@ -1,0 +1,12 @@
+erDiagram
+
+    my_table {
+        int _pk PK "not null"
+        int nn "not null"
+        int u UK
+        text default_s "default: 'some text'"
+        int default_n "default: 1"
+        timestamp default_now "default: `(now())`"
+        serial ai "increment"
+        text multiple "not null, default: 'other text'"
+    }

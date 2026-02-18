@@ -1,4 +1,4 @@
-import { BaseGenerator, writeDBMLFile } from "./common";
+import { BaseGenerator, writeMermaidFile } from "./common";
 import { SQLiteInlineForeignKeys } from "@/symbols";
 import { is, SQL } from "drizzle-orm";
 import { SQLiteBaseInteger } from "drizzle-orm/sqlite-core";
@@ -20,7 +20,7 @@ class SQLiteGenerator extends BaseGenerator<SQLiteSchema, AnySQLiteColumn> {
     return is(column, SQLiteBaseInteger) && column.autoIncrement;
   }
 
-  protected mapDefaultValue(value: unknown) {
+  protected override mapDefaultValue(value: unknown) {
     let str = "";
 
     if (typeof value === "string") {
@@ -43,7 +43,10 @@ class SQLiteGenerator extends BaseGenerator<SQLiteSchema, AnySQLiteColumn> {
 
 export function sqliteGenerate<T>(options: Options<T>): string {
   options.relational ||= false;
-  const dbml = new SQLiteGenerator(options.schema as SQLiteSchema, options.relational).generate();
-  if (options.out) writeDBMLFile(dbml, options.out);
-  return dbml;
+  const mermaid = new SQLiteGenerator(
+    options.schema as SQLiteSchema,
+    options.relational,
+  ).generate();
+  if (options.out) writeMermaidFile(mermaid, options.out);
+  return mermaid;
 }

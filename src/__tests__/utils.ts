@@ -7,7 +7,7 @@ function standardizeLineBreaks(str: string) {
 
 export async function compareContents(pathToGenerated: string) {
   pathToGenerated = resolve(process.cwd(), pathToGenerated);
-  const pathToExpected = pathToGenerated.replace(".generated", "");
+  const pathToExpected = pathToGenerated.replace(".generated.mermaid", ".mermaid");
 
   const generatedPromise = readFile(pathToGenerated, { encoding: "utf-8" });
   const expectedPromise = readFile(pathToExpected, { encoding: "utf-8" });

@@ -1,0 +1,10 @@
+erDiagram
+
+    schema1_table1 {
+        serial id PK "not null, increment"
+        integer table2_id FK
+    }
+    schema2_table2 {
+        serial id PK "not null, increment"
+    }
+schema2_table2 ||--o{ schema1_table1 : "table1_table2_id_table2_id_fk"

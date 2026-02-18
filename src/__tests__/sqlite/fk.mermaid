@@ -1,0 +1,13 @@
+erDiagram
+
+    users {
+        integer id PK "not null, increment"
+        text registered_at
+        text username
+    }
+    posts {
+        integer id PK "not null, increment"
+        text posted_by_user_registered_at
+        text posted_by
+    }
+users ||--o{ posts : "posts_posted_by_posted_by_user_registered_at_users_username_registered_at_fk"
