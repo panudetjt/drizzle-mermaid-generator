@@ -44,6 +44,6 @@ class SQLiteGenerator extends BaseGenerator<SQLiteSchema, AnySQLiteColumn> {
 export function sqliteGenerate<T>(options: Options<T>): string {
   options.relational ||= false;
   const dbml = new SQLiteGenerator(options.schema as SQLiteSchema, options.relational).generate();
-  options.out && writeDBMLFile(dbml, options.out);
+  if (options.out) writeDBMLFile(dbml, options.out);
   return dbml;
 }

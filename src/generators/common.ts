@@ -302,7 +302,7 @@ export abstract class BaseGenerator<
           relation.relationName ? `-${relation.relationName}` : ""
         }`;
 
-        if ((is(relation, One) && relation.config?.references.length) || 0 > 0) {
+        if ((is(relation, One) && relation.config?.references.length) || false) {
           left[key] = {
             type: "one",
             sourceSchema: (relation.sourceTable as unknown as AnyTable)[Schema],
