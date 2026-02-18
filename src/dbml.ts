@@ -1,5 +1,5 @@
 export class DBML {
-  private built = '';
+  private built = "";
 
   public insert(str: string) {
     this.built += str;
@@ -23,17 +23,17 @@ export class DBML {
   }
 
   public escapeType(str: string) {
-    this.built += str.includes(' ') || str.includes(')[') ? `"${str}"` : str;
+    this.built += str.includes(" ") || str.includes(")[") ? `"${str}"` : str;
     return this;
   }
 
   public newLine(newLines: number = 1) {
-    this.built += '\n'.repeat(newLines);
+    this.built += "\n".repeat(newLines);
     return this;
   }
 
   public tab(tabs: number = 1) {
-    this.built += ' '.repeat(tabs * 2);
+    this.built += " ".repeat(tabs * 2);
     return this;
   }
 

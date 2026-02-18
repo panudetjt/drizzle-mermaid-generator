@@ -1,10 +1,10 @@
-import { DBML } from '~/dbml';
-import { BaseGenerator, writeDBMLFile } from './common';
-import { PgInlineForeignKeys } from '~/symbols';
-import { CasingCache } from 'drizzle-orm/casing';
-import type { BuildQueryConfig } from 'drizzle-orm';
-import type { AnyPgColumn, PgEnum } from 'drizzle-orm/pg-core';
-import type { PgSchema, Options } from '~/types';
+import { DBML } from "@/dbml";
+import { BaseGenerator, writeDBMLFile } from "./common";
+import { PgInlineForeignKeys } from "@/symbols";
+import { CasingCache } from "drizzle-orm/casing";
+import type { BuildQueryConfig } from "drizzle-orm";
+import type { AnyPgColumn, PgEnum } from "drizzle-orm/pg-core";
+import type { PgSchema, Options } from "@/types";
 
 class PgGenerator extends BaseGenerator<PgSchema, AnyPgColumn> {
   protected override InlineForeignKeys: typeof PgInlineForeignKeys = PgInlineForeignKeys;
@@ -12,21 +12,21 @@ class PgGenerator extends BaseGenerator<PgSchema, AnyPgColumn> {
     escapeName: (name) => `"${name}"`,
     escapeParam: (num) => `$${num + 1}`,
     escapeString: (str) => `'${str.replace(/'/g, "''")}'`,
-    casing: new CasingCache()
+    casing: new CasingCache(),
   };
 
   protected override isIncremental(column: AnyPgColumn) {
-    return column.getSQLType().includes('serial');
+    return column.getSQLType().includes("serial");
   }
 
   protected override generateEnum(enum_: PgEnum<[string, ...string[]]>) {
-    const dbml = new DBML().insert('enum ').escapeSpaces(enum_.enumName).insert(' {').newLine();
+    const dbml = new DBML().insert("enum ").escapeSpaces(enum_.enumName).insert(" {").newLine();
 
     for (let i = 0; i < enum_.enumValues.length; i++) {
       dbml.tab().escapeSpaces(enum_.enumValues[i]).newLine();
     }
 
-    dbml.insert('}');
+    dbml.insert("}");
     return dbml.build();
   }
 }

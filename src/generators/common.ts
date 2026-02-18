@@ -1,5 +1,5 @@
-import { formatList, wrapColumnNames, wrapColumns } from '~/utils';
-import { DBML } from '~/dbml';
+import { formatList, wrapColumnNames, wrapColumns } from "@/utils";
+import { DBML } from "@/dbml";
 import {
   One,
   Relations,
@@ -9,15 +9,15 @@ import {
   getTableColumns,
   is,
   Table,
-  Column
-} from 'drizzle-orm';
+  Column,
+} from "drizzle-orm";
 import {
   AnyInlineForeignKeys,
   ExtraConfigBuilder,
   ExtraConfigColumns,
   Schema,
-  TableName
-} from '~/symbols';
+  TableName,
+} from "@/symbols";
 import {
   ForeignKey as PgForeignKey,
   Index as PgIndex,
@@ -26,38 +26,38 @@ import {
   UniqueConstraint as PgUniqueConstraint,
   isPgEnum,
   PgTable,
-  Check as PgCheck
-} from 'drizzle-orm/pg-core';
+  Check as PgCheck,
+} from "drizzle-orm/pg-core";
 import {
   ForeignKey as MySqlForeignKey,
   Index as MySqlIndex,
   PrimaryKey as MySqlPrimaryKey,
   MySqlTable,
   UniqueConstraint as MySqlUniqueConstraint,
-  Check as MySqlCheck
-} from 'drizzle-orm/mysql-core';
+  Check as MySqlCheck,
+} from "drizzle-orm/mysql-core";
 import {
   ForeignKey as SQLiteForeignKey,
   Index as SQLiteIndex,
   PrimaryKey as SQLitePrimaryKey,
   SQLiteTable,
   UniqueConstraint as SQLiteUniqueConstraint,
-  Check as SQLiteCheck
-} from 'drizzle-orm/sqlite-core';
-import { CasingCache } from 'drizzle-orm/casing';
-import { writeFileSync } from 'fs';
-import { resolve } from 'path';
+  Check as SQLiteCheck,
+} from "drizzle-orm/sqlite-core";
+import { CasingCache } from "drizzle-orm/casing";
+import { writeFileSync } from "fs";
+import { resolve } from "path";
 import type {
   PgInlineForeignKeys,
   MySqlInlineForeignKeys,
-  SQLiteInlineForeignKeys
-} from '~/symbols';
-import type { AnyColumn, BuildQueryConfig } from 'drizzle-orm';
-import type { AnyBuilder, AnySchema, AnyTable } from '~/types';
+  SQLiteInlineForeignKeys,
+} from "@/symbols";
+import type { AnyColumn, BuildQueryConfig } from "drizzle-orm";
+import type { AnyBuilder, AnySchema, AnyTable } from "@/types";
 
 export abstract class BaseGenerator<
   Schema extends AnySchema = AnySchema,
-  Column extends AnyColumn = AnyColumn
+  Column extends AnyColumn = AnyColumn,
 > {
   private readonly schema: Schema;
   private readonly relational: boolean;
@@ -68,10 +68,10 @@ export abstract class BaseGenerator<
     | typeof MySqlInlineForeignKeys
     | typeof SQLiteInlineForeignKeys = AnyInlineForeignKeys;
   protected buildQueryConfig: BuildQueryConfig = {
-    escapeName: () => '',
-    escapeParam: () => '',
-    escapeString: () => '',
-    casing: new CasingCache()
+    escapeName: () => "",
+    escapeParam: () => "",
+    escapeString: () => "",
+    casing: new CasingCache(),
   };
 
   constructor(schema: Schema, relational: boolean) {
@@ -84,16 +84,16 @@ export abstract class BaseGenerator<
   }
 
   protected mapDefaultValue(value: unknown) {
-    let str = '';
+    let str = "";
 
-    if (typeof value === 'string') {
+    if (typeof value === "string") {
       str = `'${value}'`;
-    } else if (typeof value === 'boolean' || typeof value === 'number') {
+    } else if (typeof value === "boolean" || typeof value === "number") {
       str = `${value}`;
     } else if (value === null) {
-      str = 'null';
+      str = "null";
     } else if (value instanceof Date) {
-      str = `'${value.toISOString().replace('T', ' ').replace('Z', '')}'`;
+      str = `'${value.toISOString().replace("T", " ").replace("Z", "")}'`;
     } else if (is(value, SQL)) {
       str = `\`${value.toQuery(this.buildQueryConfig).sql}\``;
     } else {
@@ -107,24 +107,24 @@ export abstract class BaseGenerator<
     const dbml = new DBML()
       .tab()
       .escapeSpaces(column.name)
-      .insert(' ')
+      .insert(" ")
       .escapeType(column.getSQLType());
     const constraints: string[] = [];
 
     if (column.primary) {
-      constraints.push('pk');
+      constraints.push("pk");
     }
 
     if (column.notNull) {
-      constraints.push('not null');
+      constraints.push("not null");
     }
 
     if (column.isUnique) {
-      constraints.push('unique');
+      constraints.push("unique");
     }
 
     if (this.isIncremental(column)) {
-      constraints.push('increment');
+      constraints.push("increment");
     }
 
     if (column.default !== undefined) {
@@ -143,13 +143,13 @@ export abstract class BaseGenerator<
       this.generateForeignKeys(table[this.InlineForeignKeys as typeof AnyInlineForeignKeys]);
     }
 
-    const dbml = new DBML().insert('table ');
+    const dbml = new DBML().insert("table ");
 
     if (table[Schema]) {
-      dbml.escapeSpaces(table[Schema]).insert('.');
+      dbml.escapeSpaces(table[Schema]).insert(".");
     }
 
-    dbml.escapeSpaces(table[TableName]).insert(' {').newLine();
+    dbml.escapeSpaces(table[TableName]).insert(" {").newLine();
 
     const columns = getTableColumns(table as unknown as Table);
     for (const columnName in columns) {
@@ -170,7 +170,7 @@ export abstract class BaseGenerator<
       .filter((index) => !(is(index, PgCheck) || is(index, MySqlCheck) || is(index, SQLiteCheck)));
     const fks = builtIndexes.filter(
       (index) =>
-        is(index, PgForeignKey) || is(index, MySqlForeignKey) || is(index, SQLiteForeignKey)
+        is(index, PgForeignKey) || is(index, MySqlForeignKey) || is(index, SQLiteForeignKey),
     ) as unknown as (PgForeignKey | MySqlForeignKey | SQLiteForeignKey)[];
 
     if (!this.relational) {
@@ -180,7 +180,7 @@ export abstract class BaseGenerator<
     if (extraConfigBuilder && builtIndexes.length > fks.length) {
       const indexes = extraConfig ?? {};
 
-      dbml.newLine().tab().insert('indexes {').newLine();
+      dbml.newLine().tab().insert("indexes {").newLine();
 
       for (const indexName in indexes) {
         const index = indexes[indexName].build(table);
@@ -188,16 +188,16 @@ export abstract class BaseGenerator<
 
         if (is(index, PgIndex) || is(index, MySqlIndex) || is(index, SQLiteIndex)) {
           const configColumns = index.config.columns.flatMap((entry) =>
-            is(entry, SQL) ? entry.queryChunks.filter((v) => is(v, Column)) : (entry as Column)
+            is(entry, SQL) ? entry.queryChunks.filter((v) => is(v, Column)) : (entry as Column),
           );
 
           const idxColumns = wrapColumns(
             configColumns as AnyColumn[],
-            this.buildQueryConfig.escapeName
+            this.buildQueryConfig.escapeName,
           );
           const idxProperties = index.config.name
-            ? ` [name: '${index.config.name}'${index.config.unique ? ', unique' : ''}]`
-            : '';
+            ? ` [name: '${index.config.name}'${index.config.unique ? ", unique" : ""}]`
+            : "";
           dbml.insert(`${idxColumns}${idxProperties}`);
         }
 
@@ -212,22 +212,22 @@ export abstract class BaseGenerator<
           is(index, SQLiteUniqueConstraint)
         ) {
           const uqColumns = wrapColumns(index.columns, this.buildQueryConfig.escapeName);
-          const uqProperties = index.name ? `[name: '${index.name}', unique]` : '[unique]';
+          const uqProperties = index.name ? `[name: '${index.name}', unique]` : "[unique]";
           dbml.insert(`${uqColumns} ${uqProperties}`);
         }
 
         dbml.newLine();
       }
 
-      dbml.tab().insert('}').newLine();
+      dbml.tab().insert("}").newLine();
     }
 
-    dbml.insert('}');
+    dbml.insert("}");
     return dbml.build();
   }
 
   protected generateEnum(_enum_: PgEnum<[string, ...string[]]>) {
-    return '';
+    return "";
   }
 
   private generateForeignKeys(fks: (PgForeignKey | MySqlForeignKey | SQLiteForeignKey)[]) {
@@ -242,27 +242,27 @@ export abstract class BaseGenerator<
       const dbml = new DBML().insert(`ref ${fks[i].getName()}: `);
 
       if (sourceSchema) {
-        dbml.escapeSpaces(sourceSchema).insert('.');
+        dbml.escapeSpaces(sourceSchema).insert(".");
       }
 
       dbml
         .escapeSpaces(sourceTable[TableName])
-        .insert('.')
+        .insert(".")
         .insert(wrapColumns(sourceColumns, this.buildQueryConfig.escapeName))
-        .insert(' > ');
+        .insert(" > ");
 
       if (foreignSchema) {
-        dbml.escapeSpaces(foreignSchema).insert('.');
+        dbml.escapeSpaces(foreignSchema).insert(".");
       }
 
       dbml
         .escapeSpaces(foreignTable[TableName])
-        .insert('.')
+        .insert(".")
         .insert(wrapColumns(foreignColumns, this.buildQueryConfig.escapeName));
 
       const actions: string[] = [
-        `delete: ${fks[i].onDelete || 'no action'}`,
-        `update: ${fks[i].onUpdate || 'no action'}`
+        `delete: ${fks[i].onDelete || "no action"}`,
+        `update: ${fks[i].onUpdate || "no action"}`,
       ];
       const actionsStr = ` [${formatList(actions, this.buildQueryConfig.escapeName)}]`;
 
@@ -275,7 +275,7 @@ export abstract class BaseGenerator<
     const left: Record<
       string,
       {
-        type: 'one' | 'many';
+        type: "one" | "many";
         sourceSchema?: string;
         sourceTable?: string;
         sourceColumns?: string[];
@@ -289,71 +289,71 @@ export abstract class BaseGenerator<
     for (let i = 0; i < relations_.length; i++) {
       const relations = relations_[i].config({
         one: createOne(relations_[i].table),
-        many: createMany(relations_[i].table)
+        many: createMany(relations_[i].table),
       });
 
       for (const relationName in relations) {
         const relation = relations[relationName];
         const tableNames: string[] = [
           (relations_[i].table as unknown as AnyTable)[TableName],
-          relation.referencedTableName
+          relation.referencedTableName,
         ].sort();
         const key = `${tableNames[0]}-${tableNames[1]}${
-          relation.relationName ? `-${relation.relationName}` : ''
+          relation.relationName ? `-${relation.relationName}` : ""
         }`;
 
         if ((is(relation, One) && relation.config?.references.length) || 0 > 0) {
           left[key] = {
-            type: 'one',
+            type: "one",
             sourceSchema: (relation.sourceTable as unknown as AnyTable)[Schema],
             sourceTable: (relation.sourceTable as unknown as AnyTable)[TableName],
             sourceColumns: (relation as One).config?.fields.map((col) => col.name) || [],
             foreignSchema: (relation.referencedTable as unknown as AnyTable)[Schema],
             foreignTable: relation.referencedTableName,
-            foreignColumns: (relation as One).config?.references.map((col) => col.name) || []
+            foreignColumns: (relation as One).config?.references.map((col) => col.name) || [],
           };
         } else {
           right[key] = {
-            type: is(relation, One) ? 'one' : 'many'
+            type: is(relation, One) ? "one" : "many",
           };
         }
       }
     }
 
     for (const key in left) {
-      const sourceSchema = left[key].sourceSchema || '';
-      const sourceTable = left[key].sourceTable || '';
-      const foreignSchema = left[key].foreignSchema || '';
-      const foreignTable = left[key].foreignTable || '';
+      const sourceSchema = left[key].sourceSchema || "";
+      const sourceTable = left[key].sourceTable || "";
+      const foreignSchema = left[key].foreignSchema || "";
+      const foreignTable = left[key].foreignTable || "";
       const sourceColumns = left[key].sourceColumns || [];
       const foreignColumns = left[key].foreignColumns || [];
-      const relationType = right[key]?.type || 'one';
+      const relationType = right[key]?.type || "one";
 
       if (sourceColumns.length === 0 || foreignColumns.length === 0) {
         throw Error(
-          `Not enough information was provided to create relation between "${sourceTable}" and "${foreignTable}"`
+          `Not enough information was provided to create relation between "${sourceTable}" and "${foreignTable}"`,
         );
       }
 
-      const dbml = new DBML().insert('ref: ');
+      const dbml = new DBML().insert("ref: ");
 
       if (sourceSchema) {
-        dbml.escapeSpaces(sourceSchema).insert('.');
+        dbml.escapeSpaces(sourceSchema).insert(".");
       }
 
       dbml
         .escapeSpaces(sourceTable)
-        .insert('.')
+        .insert(".")
         .insert(wrapColumnNames(sourceColumns, this.buildQueryConfig.escapeName))
-        .insert(` ${relationType === 'one' ? '-' : '>'} `);
+        .insert(` ${relationType === "one" ? "-" : ">"} `);
 
       if (foreignSchema) {
-        dbml.escapeSpaces(foreignSchema).insert('.');
+        dbml.escapeSpaces(foreignSchema).insert(".");
       }
 
       dbml
         .escapeSpaces(foreignTable)
-        .insert('.')
+        .insert(".")
         .insert(wrapColumnNames(foreignColumns, this.buildQueryConfig.escapeName));
 
       this.generatedRefs.push(dbml.build());
@@ -395,9 +395,9 @@ export function writeDBMLFile(dbml: string, outPath: string) {
   const path = resolve(process.cwd(), outPath);
 
   try {
-    writeFileSync(path, dbml, { encoding: 'utf-8' });
+    writeFileSync(path, dbml, { encoding: "utf-8" });
   } catch (err) {
-    console.error('An error ocurred while writing the generated DBML');
+    console.error("An error ocurred while writing the generated DBML");
     throw err;
   }
 }

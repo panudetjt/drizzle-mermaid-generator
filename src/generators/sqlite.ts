@@ -1,19 +1,19 @@
-import { BaseGenerator, writeDBMLFile } from './common';
-import { SQLiteInlineForeignKeys } from '~/symbols';
-import { is, SQL } from 'drizzle-orm';
-import { SQLiteBaseInteger } from 'drizzle-orm/sqlite-core';
-import { CasingCache } from 'drizzle-orm/casing';
-import type { BuildQueryConfig } from 'drizzle-orm';
-import type { AnySQLiteColumn } from 'drizzle-orm/sqlite-core';
-import type { SQLiteSchema, Options } from '~/types';
+import { BaseGenerator, writeDBMLFile } from "./common";
+import { SQLiteInlineForeignKeys } from "@/symbols";
+import { is, SQL } from "drizzle-orm";
+import { SQLiteBaseInteger } from "drizzle-orm/sqlite-core";
+import { CasingCache } from "drizzle-orm/casing";
+import type { BuildQueryConfig } from "drizzle-orm";
+import type { AnySQLiteColumn } from "drizzle-orm/sqlite-core";
+import type { SQLiteSchema, Options } from "@/types";
 
 class SQLiteGenerator extends BaseGenerator<SQLiteSchema, AnySQLiteColumn> {
   protected override InlineForeignKeys: typeof SQLiteInlineForeignKeys = SQLiteInlineForeignKeys;
   protected override buildQueryConfig: BuildQueryConfig = {
     escapeName: (name) => `"${name}"`,
-    escapeParam: (_num) => '?',
+    escapeParam: (_num) => "?",
     escapeString: (str) => `'${str.replace(/'/g, "''")}'`,
-    casing: new CasingCache()
+    casing: new CasingCache(),
   };
 
   protected override isIncremental(column: AnySQLiteColumn) {
@@ -21,16 +21,16 @@ class SQLiteGenerator extends BaseGenerator<SQLiteSchema, AnySQLiteColumn> {
   }
 
   protected mapDefaultValue(value: unknown) {
-    let str = '';
+    let str = "";
 
-    if (typeof value === 'string') {
+    if (typeof value === "string") {
       str = `'${value}'`;
-    } else if (typeof value === 'boolean') {
+    } else if (typeof value === "boolean") {
       str = `${value ? 1 : 0}`;
-    } else if (typeof value === 'number') {
+    } else if (typeof value === "number") {
       str = `${value}`;
     } else if (value === null) {
-      str = 'null';
+      str = "null";
     } else if (is(value, SQL)) {
       str = `\`${value.toQuery(this.buildQueryConfig).sql}\``;
     } else {

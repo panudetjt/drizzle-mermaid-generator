@@ -1,14 +1,14 @@
-import type { AnyColumn } from 'drizzle-orm';
+import type { AnyColumn } from "drizzle-orm";
 
 export function formatList(
   items: string[],
   escapeName: (name: string) => string,
-  escapeSpaces: boolean = false
+  escapeSpaces: boolean = false,
 ) {
   return items
     .reduce(
-      (str, item) => `${str}, ${escapeSpaces && item.includes(' ') ? escapeName(item) : item}`,
-      ''
+      (str, item) => `${str}, ${escapeSpaces && item.includes(" ") ? escapeName(item) : item}`,
+      "",
     )
     .slice(2);
 }
@@ -17,7 +17,7 @@ export function wrapColumns(columns: AnyColumn[], escapeName: (name: string) => 
   const formatted = formatList(
     columns.map((column) => column.name),
     escapeName,
-    true
+    true,
   );
   return columns.length === 1 ? columns[0].name : `(${formatted})`;
 }
