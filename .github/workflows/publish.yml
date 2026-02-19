@@ -33,8 +33,8 @@ jobs:
       - name: Lint
         run: bun run lint
 
-      - name: Test Postgres Dialect
-        run: bun run test:pg
+      - name: Test All Dialect
+        run: bun run test:all
 
       - name: Build
         run: bun run build
