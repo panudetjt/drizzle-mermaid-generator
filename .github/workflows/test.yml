@@ -45,3 +45,6 @@ jobs:
 
       - name: Test SQLite Dialect
         run: npm run test:sqlite
+
+      - name: Validate Mermaid Output
+        run: npm run validate:mermaid
