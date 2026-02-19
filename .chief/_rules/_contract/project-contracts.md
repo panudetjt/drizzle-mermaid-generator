@@ -134,3 +134,11 @@ The library must handle these drizzle-orm constructs:
 - One test file per dialect in `src/__tests__/<dialect>/`
 - Test utility `compareContents()` normalizes line breaks before comparison
 - Tests cover: types, constraints, inline FK, config FK, indexes, schemas, RQB relations, and a "realistic" integration scenario
+
+## TypeScript Dependencies
+
+### Bun Types
+
+- Use `@types/bun` for Bun runtime type definitions
+- `bun-types` is **deprecated** — do not use
+- Required for scripts that use Bun-specific APIs (e.g., `scripts/validate-mermaid.ts`)

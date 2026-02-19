@@ -1,7 +1,7 @@
 #!/usr/bin/env bun
 import { spawn } from "node:child_process";
 import { cpus } from "node:os";
-import { globSync } from "node:fs";
+import { Glob } from "bun";
 
 interface ValidationResult {
 	file: string;
@@ -62,7 +62,8 @@ async function validateFileWithMmdc(filePath: string, timeout: number): Promise<
 }
 
 function discoverMermaidFiles(pattern: string): string[] {
-	const files = globSync(pattern);
+	const glob = new Glob(pattern);
+	const files = [...glob.scanSync(".")];
 	return files.sort();
 }
 
