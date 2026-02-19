@@ -1,12 +1,34 @@
-.github
-.vscode
-node_modules
-src
-.eslintrc.json
+# Source and dev files
+src/
+.github/
+.vscode/
+
+# Claude Code config
+.claude/
+CLAUDE.md
+
+# Config files
 .gitignore
 .npmignore
+.eslintrc.json
 .prettierignore
 .prettierrc.json
-pnpm-lock.yaml
+.oxlintrc.json
 tsconfig.json
 vitest.config.js
+
+# Lock files
+bun.lock
+pnpm-lock.yaml
+package-lock.json
+yarn.lock
+
+# Development directories
+node_modules/
+.chief/
+scripts/
+
+# Test files
+**/__tests__/
+**/*.test.ts
+**/*.spec.ts
