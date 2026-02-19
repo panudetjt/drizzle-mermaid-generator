@@ -23,7 +23,7 @@
   "module": "dist/index.mjs",
   "typings": "dist/index.d.mts",
   "bin": {
-    "drizzle-mermaid-generator": "./dist/cli.cjs"
+    "drizzle-mermaid-generator": "dist/cli.cjs"
   },
   "exports": {
     ".": {
