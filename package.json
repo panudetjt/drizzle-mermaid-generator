@@ -21,8 +21,20 @@
   "main": "dist/index.cjs",
   "module": "dist/index.js",
   "typings": "dist/index.d.ts",
+  "bin": {
+    "drizzle-mermaid-generator": "./dist/cli.cjs"
+  },
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs",
+      "types": "./dist/index.d.ts"
+    },
+    "./cli": "./dist/cli.cjs"
+  },
   "scripts": {
-    "build": "tsdown src/index.ts --format cjs,esm --dts",
+    "build": "tsdown src/index.ts src/cli.ts --format cjs,esm --dts",
+    "build:cli": "tsdown src/cli.ts --format cjs --dts false",
     "fmt": "oxfmt",
     "fmt:check": "oxfmt --check",
     "lint": "oxlint",
@@ -31,7 +43,8 @@
     "test:pg": "vitest run --dir src/__tests__/pg",
     "test:mysql": "vitest run --dir src/__tests__/mysql",
     "test:sqlite": "vitest run --dir src/__tests__/sqlite",
-    "validate:mermaid": "for f in src/__tests__/*/*.mermaid; do bunx -p @mermaid-js/mermaid-cli mmdc -i \"$f\" -o /tmp/test.svg -q || exit 1; done && echo 'All Mermaid files valid'"
+    "validate:mermaid": "bun run scripts/validate-mermaid.ts",
+    "validate:mermaid:shell": "for f in src/__tests__/*/*.mermaid; do bunx -p @mermaid-js/mermaid-cli mmdc -i \"$f\" -o /tmp/test.svg -q || exit 1; done && echo 'All Mermaid files valid'"
   },
   "devDependencies": {
     "drizzle-orm": "^0.45.1",
