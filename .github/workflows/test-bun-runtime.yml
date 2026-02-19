@@ -1,4 +1,4 @@
-name: Lint & Test
+name: Test (Bun Runtime)
 
 on:
   push:
@@ -14,8 +14,8 @@ permissions:
   contents: read
 
 jobs:
-  lint-and-test:
-    name: Lint & Test (Node.js)
+  test-bun:
+    name: Test (Bun)
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -26,22 +26,20 @@ jobs:
         with:
           bun-version-file: package.json
 
-      - name: Setup Node.js
-        uses: actions/setup-node@1d0ff469b7ec7b3cb9d8673fde0c81c44821de2a # v4.2.0
-        with:
-          node-version: 20
-
       - name: Install Dependencies
         run: bun install --frozen-lockfile
 
       - name: Lint
-        run: npm run lint
+        run: bun run lint
 
       - name: Test Postgres Dialect
-        run: npm run test:pg
+        run: bun run test:pg
 
       - name: Test MySQL Dialect
-        run: npm run test:mysql
+        run: bun run test:mysql
 
       - name: Test SQLite Dialect
-        run: npm run test:sqlite
+        run: bun run test:sqlite
+
+      - name: Validate Mermaid Output
+        run: bun run validate:mermaid

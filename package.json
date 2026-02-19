@@ -2,6 +2,7 @@
   "name": "drizzle-mermaid-generator",
   "version": "0.0.1",
   "description": "Convert your Drizzle ORM schema into Mermaid ER diagrams",
+  "packageManager": "bun@1.3.9",
   "keywords": [
     "drizzle-orm",
     "er-diagram",
