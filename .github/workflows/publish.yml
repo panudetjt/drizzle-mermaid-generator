@@ -1,34 +1,45 @@
 name: Publish Release
+
 on:
   release:
-    types:
-      - released
+    types: [released]
+
+permissions:
+  contents: read
+  id-token: write
+
 jobs:
   publish:
     name: Publish Release
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
-      - name: Install pnpm
-        uses: pnpm/action-setup@v2
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@4bc047ad259df6fc24a6c9b0f9a0cb08cf17fbe5 # v2.0.1
         with:
-          version: 8
-      - name: Install Node JS
-        uses: actions/setup-node@v3
+          bun-version-file: package.json
+
+      - name: Setup Node.js
+        uses: actions/setup-node@1d0ff469b7ec7b3cb9d8673fde0c81c44821de2a # v4.2.0
         with:
-          node-version: 18
+          node-version: 20
           registry-url: https://registry.npmjs.org
-          cache: 'pnpm'
+
       - name: Install Dependencies
-        run: pnpm install
+        run: bun install --frozen-lockfile
+
       - name: Lint
-        run: pnpm lint
+        run: bun run lint
+
       - name: Test Postgres Dialect
-        run: pnpm test:pg
+        run: bun run test:pg
+
       - name: Build
-        run: pnpm build
+        run: bun run build
+
       - name: Publish
-        run: npm publish
+        run: npm publish --provenance
         env:
-          NODE_AUTH_TOKEN: ${{secrets.NPM_AUTH_TOKEN}}
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_AUTH_TOKEN }}

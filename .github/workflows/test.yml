@@ -1,35 +1,47 @@
 name: Lint & Test
+
 on:
   push:
-    branches:
-      - '**'
+    branches: ["**"]
   pull_request:
-    branches:
-      - '**'
+    branches: ["**"]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
 jobs:
   lint-and-test:
-    name: Lint & Test
+    name: Lint & Test (Node.js)
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
-      - name: Install pnpm
-        uses: pnpm/action-setup@v2
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@4bc047ad259df6fc24a6c9b0f9a0cb08cf17fbe5 # v2.0.1
         with:
-          version: 8
-      - name: Install Node JS
-        uses: actions/setup-node@v3
+          bun-version-file: package.json
+
+      - name: Setup Node.js
+        uses: actions/setup-node@1d0ff469b7ec7b3cb9d8673fde0c81c44821de2a # v4.2.0
         with:
-          node-version: 18
-          registry-url: https://registry.npmjs.org
-          cache: 'pnpm'
+          node-version: 20
+
       - name: Install Dependencies
-        run: pnpm install
+        run: bun install --frozen-lockfile
+
       - name: Lint
-        run: pnpm lint
+        run: npm run lint
+
       - name: Test Postgres Dialect
-        run: pnpm test:pg
+        run: npm run test:pg
+
       - name: Test MySQL Dialect
-        run: pnpm test:mysql
+        run: npm run test:mysql
+
       - name: Test SQLite Dialect
-        run: pnpm test:sqlite
+        run: npm run test:sqlite

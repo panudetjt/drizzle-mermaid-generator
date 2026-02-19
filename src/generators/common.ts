@@ -1,5 +1,5 @@
-import { formatList, wrapColumnNames, wrapColumns } from '~/utils';
-import { DBML } from '~/dbml';
+import { normalizeSqlType, sanitizeName } from "@/utils";
+import { MermaidBuilder } from "@/mermaid";
 import {
   One,
   Relations,
@@ -9,69 +9,67 @@ import {
   getTableColumns,
   is,
   Table,
-  Column
-} from 'drizzle-orm';
+} from "drizzle-orm";
 import {
   AnyInlineForeignKeys,
   ExtraConfigBuilder,
   ExtraConfigColumns,
   Schema,
-  TableName
-} from '~/symbols';
+  TableName,
+} from "@/symbols";
 import {
   ForeignKey as PgForeignKey,
-  Index as PgIndex,
   PgEnum,
   PrimaryKey as PgPrimaryKey,
-  UniqueConstraint as PgUniqueConstraint,
   isPgEnum,
   PgTable,
-  Check as PgCheck
-} from 'drizzle-orm/pg-core';
+  Check as PgCheck,
+} from "drizzle-orm/pg-core";
 import {
   ForeignKey as MySqlForeignKey,
-  Index as MySqlIndex,
   PrimaryKey as MySqlPrimaryKey,
   MySqlTable,
-  UniqueConstraint as MySqlUniqueConstraint,
-  Check as MySqlCheck
-} from 'drizzle-orm/mysql-core';
+  Check as MySqlCheck,
+} from "drizzle-orm/mysql-core";
 import {
   ForeignKey as SQLiteForeignKey,
-  Index as SQLiteIndex,
   PrimaryKey as SQLitePrimaryKey,
   SQLiteTable,
-  UniqueConstraint as SQLiteUniqueConstraint,
-  Check as SQLiteCheck
-} from 'drizzle-orm/sqlite-core';
-import { CasingCache } from 'drizzle-orm/casing';
-import { writeFileSync } from 'fs';
-import { resolve } from 'path';
+  Check as SQLiteCheck,
+} from "drizzle-orm/sqlite-core";
+import { CasingCache } from "drizzle-orm/casing";
+import { writeFileSync } from "fs";
+import { resolve } from "path";
 import type {
   PgInlineForeignKeys,
   MySqlInlineForeignKeys,
-  SQLiteInlineForeignKeys
-} from '~/symbols';
-import type { AnyColumn, BuildQueryConfig } from 'drizzle-orm';
-import type { AnyBuilder, AnySchema, AnyTable } from '~/types';
+  SQLiteInlineForeignKeys,
+} from "@/symbols";
+import type { AnyColumn, BuildQueryConfig } from "drizzle-orm";
+import type { AnyBuilder, AnySchema, AnyTable } from "@/types";
+
+/**
+ * Set of column names that are foreign keys, used to mark FK constraint markers.
+ */
+type ForeignKeyColumnSet = Set<string>;
 
 export abstract class BaseGenerator<
   Schema extends AnySchema = AnySchema,
-  Column extends AnyColumn = AnyColumn
+  Column extends AnyColumn = AnyColumn,
 > {
   private readonly schema: Schema;
   private readonly relational: boolean;
-  private generatedRefs: string[] = [];
+  private generatedRelationships: string[] = [];
   protected InlineForeignKeys:
     | typeof AnyInlineForeignKeys
     | typeof PgInlineForeignKeys
     | typeof MySqlInlineForeignKeys
     | typeof SQLiteInlineForeignKeys = AnyInlineForeignKeys;
   protected buildQueryConfig: BuildQueryConfig = {
-    escapeName: () => '',
-    escapeParam: () => '',
-    escapeString: () => '',
-    casing: new CasingCache()
+    escapeName: () => "",
+    escapeParam: () => "",
+    escapeString: () => "",
+    casing: new CasingCache(),
   };
 
   constructor(schema: Schema, relational: boolean) {
@@ -84,16 +82,16 @@ export abstract class BaseGenerator<
   }
 
   protected mapDefaultValue(value: unknown) {
-    let str = '';
+    let str = "";
 
-    if (typeof value === 'string') {
+    if (typeof value === "string") {
       str = `'${value}'`;
-    } else if (typeof value === 'boolean' || typeof value === 'number') {
+    } else if (typeof value === "boolean" || typeof value === "number") {
       str = `${value}`;
     } else if (value === null) {
-      str = 'null';
+      str = "null";
     } else if (value instanceof Date) {
-      str = `'${value.toISOString().replace('T', ' ').replace('Z', '')}'`;
+      str = `'${value.toISOString().replace("T", " ").replace("Z", "")}'`;
     } else if (is(value, SQL)) {
       str = `\`${value.toQuery(this.buildQueryConfig).sql}\``;
     } else {
@@ -103,60 +101,107 @@ export abstract class BaseGenerator<
     return str;
   }
 
-  protected generateColumn(column: Column) {
-    const dbml = new DBML()
-      .tab()
-      .escapeSpaces(column.name)
-      .insert(' ')
-      .escapeType(column.getSQLType());
+  /**
+   * Generate an attribute line for a column in Mermaid syntax.
+   * @param column - The column to generate
+   * @param fkColumns - Set of column names that are foreign keys (for FK marker)
+   * @param compositePkColumns - Set of column names in composite primary keys
+   */
+  protected generateColumn(
+    column: Column,
+    fkColumns: ForeignKeyColumnSet = new Set(),
+    compositePkColumns: Set<string> = new Set(),
+  ): string {
+    const normalizedType = normalizeSqlType(column.getSQLType());
+    const columnName = sanitizeName(column.name);
+
     const constraints: string[] = [];
 
-    if (column.primary) {
-      constraints.push('pk');
+    // Primary key marker (from column.primary or composite PK)
+    if (column.primary || compositePkColumns.has(column.name)) {
+      constraints.push("PK");
     }
+
+    // Foreign key marker
+    if (fkColumns.has(column.name)) {
+      constraints.push("FK");
+    }
+
+    // Unique marker
+    if (column.isUnique) {
+      constraints.push("UK");
+    }
+
+    // Build comment string for metadata
+    const commentParts: string[] = [];
 
     if (column.notNull) {
-      constraints.push('not null');
-    }
-
-    if (column.isUnique) {
-      constraints.push('unique');
+      commentParts.push("not null");
     }
 
     if (this.isIncremental(column)) {
-      constraints.push('increment');
+      commentParts.push("increment");
     }
 
     if (column.default !== undefined) {
-      constraints.push(`default: ${this.mapDefaultValue(column.default)}`);
+      commentParts.push(`default: ${this.mapDefaultValue(column.default)}`);
     }
 
-    if (constraints.length > 0) {
-      dbml.insert(` [${formatList(constraints, this.buildQueryConfig.escapeName)}]`);
-    }
+    const constraintStr = constraints.length > 0 ? constraints.join(", ") : undefined;
+    const commentStr = commentParts.length > 0 ? commentParts.join(", ") : undefined;
 
-    return dbml.build();
+    const builder = new MermaidBuilder();
+    builder.attribute(normalizedType, columnName, constraintStr, commentStr);
+    return builder.build();
   }
 
-  protected generateTable(table: AnyTable) {
+  /**
+   * Generate a complete entity block for a table.
+   */
+  protected generateTable(table: AnyTable): { entity: string; fkColumnNames: Set<string> } {
+    const fkColumnNames = new Set<string>();
+    const allFks: (PgForeignKey | MySqlForeignKey | SQLiteForeignKey)[] = [];
+
+    // Collect foreign key columns from inline FKs
     if (!this.relational) {
-      this.generateForeignKeys(table[this.InlineForeignKeys as typeof AnyInlineForeignKeys]);
+      const inlineFks = table[this.InlineForeignKeys as typeof AnyInlineForeignKeys] as unknown as (
+        | PgForeignKey
+        | MySqlForeignKey
+        | SQLiteForeignKey
+      )[];
+      if (inlineFks) {
+        allFks.push(...inlineFks);
+        for (const fk of inlineFks) {
+          const columns = fk.reference().columns;
+          for (const col of columns) {
+            fkColumnNames.add(col.name);
+          }
+        }
+      }
     }
 
-    const dbml = new DBML().insert('table ');
+    // Get entity name (with schema prefix if applicable)
+    const entityName = this.getEntityName(table);
 
-    if (table[Schema]) {
-      dbml.escapeSpaces(table[Schema]).insert('.');
-    }
-
-    dbml.escapeSpaces(table[TableName]).insert(' {').newLine();
+    const builder = new MermaidBuilder();
+    builder.entityStart(entityName);
 
     const columns = getTableColumns(table as unknown as Table);
+
+    // Collect composite PK columns from extra config
+    const compositePkColumns = this.getCompositePkColumns(table);
+
+    // Generate all column attributes
     for (const columnName in columns) {
       const column = columns[columnName];
-      const columnDBML = this.generateColumn(column as Column);
-      dbml.insert(columnDBML).newLine();
+      const columnLine = this.generateColumn(column as Column, fkColumnNames, compositePkColumns);
+      // The generateColumn already produces properly indented attribute lines
+      builder.insert(columnLine).insert("\n");
     }
+
+    builder.entityEnd();
+
+    // Collect FKs from extra config for relationship generation
     const extraConfigBuilder = table[ExtraConfigBuilder];
     const extraConfigColumns = table[ExtraConfigColumns];
     const extraConfig = extraConfigBuilder?.(extraConfigColumns ?? {});
@@ -166,121 +211,113 @@ export abstract class BaseGenerator<
     )
       .map((b: AnyBuilder) => b?.build(table))
       .filter((b) => b !== undefined)
-      // The DBML markup language doesn't support check constraints
       .filter((index) => !(is(index, PgCheck) || is(index, MySqlCheck) || is(index, SQLiteCheck)));
+
     const fks = builtIndexes.filter(
       (index) =>
-        is(index, PgForeignKey) || is(index, MySqlForeignKey) || is(index, SQLiteForeignKey)
+        is(index, PgForeignKey) || is(index, MySqlForeignKey) || is(index, SQLiteForeignKey),
     ) as unknown as (PgForeignKey | MySqlForeignKey | SQLiteForeignKey)[];
 
+    allFks.push(...fks);
+
+    // Track FK columns from extra config
+    for (const fk of fks) {
+      const columns = fk.reference().columns;
+      for (const col of columns) {
+        fkColumnNames.add(col.name);
+      }
+    }
+
     if (!this.relational) {
-      this.generateForeignKeys(fks);
+      this.generateForeignKeys(allFks);
     }
 
-    if (extraConfigBuilder && builtIndexes.length > fks.length) {
-      const indexes = extraConfig ?? {};
+    return { entity: builder.build(), fkColumnNames };
+  }
 
-      dbml.newLine().tab().insert('indexes {').newLine();
+  /**
+   * Get the entity name for a table, with schema prefix if applicable.
+   */
+  protected getEntityName(table: AnyTable): string {
+    let name = table[TableName];
+    const schema = table[Schema];
 
-      for (const indexName in indexes) {
-        const index = indexes[indexName].build(table);
-        dbml.tab(2);
+    if (schema) {
+      name = `${schema}_${name}`;
+    }
 
-        if (is(index, PgIndex) || is(index, MySqlIndex) || is(index, SQLiteIndex)) {
-          const configColumns = index.config.columns.flatMap((entry) =>
-            is(entry, SQL) ? entry.queryChunks.filter((v) => is(v, Column)) : (entry as Column)
-          );
+    return sanitizeName(name);
+  }
 
-          const idxColumns = wrapColumns(
-            configColumns as AnyColumn[],
-            this.buildQueryConfig.escapeName
-          );
-          const idxProperties = index.config.name
-            ? ` [name: '${index.config.name}'${index.config.unique ? ', unique' : ''}]`
-            : '';
-          dbml.insert(`${idxColumns}${idxProperties}`);
-        }
+  /**
+   * Extract composite PK column names from extra config.
+   */
+  private getCompositePkColumns(table: AnyTable): Set<string> {
+    const compositePkColumns = new Set<string>();
 
-        if (is(index, PgPrimaryKey) || is(index, MySqlPrimaryKey) || is(index, SQLitePrimaryKey)) {
-          const pkColumns = wrapColumns(index.columns, this.buildQueryConfig.escapeName);
-          dbml.insert(`${pkColumns} [pk]`);
-        }
+    const extraConfigBuilder = table[ExtraConfigBuilder];
+    const extraConfigColumns = table[ExtraConfigColumns];
+    const extraConfig = extraConfigBuilder?.(extraConfigColumns ?? {});
 
-        if (
-          is(index, PgUniqueConstraint) ||
-          is(index, MySqlUniqueConstraint) ||
-          is(index, SQLiteUniqueConstraint)
-        ) {
-          const uqColumns = wrapColumns(index.columns, this.buildQueryConfig.escapeName);
-          const uqProperties = index.name ? `[name: '${index.name}', unique]` : '[unique]';
-          dbml.insert(`${uqColumns} ${uqProperties}`);
-        }
+    const builtIndexes = (
+      Array.isArray(extraConfig) ? extraConfig : Object.values(extraConfig ?? {})
+    )
+      .map((b: AnyBuilder) => b?.build(table))
+      .filter((b) => b !== undefined);
 
-        dbml.newLine();
+    const primaryKeys = builtIndexes.filter(
+      (index) =>
+        is(index, PgPrimaryKey) || is(index, MySqlPrimaryKey) || is(index, SQLitePrimaryKey),
+    ) as (PgPrimaryKey | MySqlPrimaryKey | SQLitePrimaryKey)[];
+
+    for (const pk of primaryKeys) {
+      for (const col of pk.columns) {
+        compositePkColumns.add(col.name);
       }
-
-      dbml.tab().insert('}').newLine();
     }
 
-    dbml.insert('}');
-    return dbml.build();
+    return compositePkColumns;
   }
 
-  protected generateEnum(_enum_: PgEnum<[string, ...string[]]>) {
-    return '';
+  /**
+   * PostgreSQL enums return empty string - handled by column type normalization.
+   */
+  protected generateEnum(_enum_: PgEnum<[string, ...string[]]>): string {
+    return "";
   }
 
+  /**
+   * Generate Mermaid relationship lines for foreign keys.
+   */
   private generateForeignKeys(fks: (PgForeignKey | MySqlForeignKey | SQLiteForeignKey)[]) {
-    for (let i = 0; i < fks.length; i++) {
-      const sourceTable = fks[i].table as unknown as AnyTable;
-      const foreignTable = fks[i].reference().foreignTable as unknown as AnyTable;
-      const sourceSchema = sourceTable[Schema];
-      const foreignSchema = foreignTable[Schema];
-      const sourceColumns = fks[i].reference().columns;
-      const foreignColumns = fks[i].reference().foreignColumns;
+    for (const fk of fks) {
+      const sourceTable = fk.table as unknown as AnyTable;
+      const foreignTable = fk.reference().foreignTable as unknown as AnyTable;
+      const sourceName = this.getEntityName(sourceTable);
+      const foreignName = this.getEntityName(foreignTable);
+      const fkName = fk.getName();
 
-      const dbml = new DBML().insert(`ref ${fks[i].getName()}: `);
-
-      if (sourceSchema) {
-        dbml.escapeSpaces(sourceSchema).insert('.');
-      }
-
-      dbml
-        .escapeSpaces(sourceTable[TableName])
-        .insert('.')
-        .insert(wrapColumns(sourceColumns, this.buildQueryConfig.escapeName))
-        .insert(' > ');
-
-      if (foreignSchema) {
-        dbml.escapeSpaces(foreignSchema).insert('.');
-      }
-
-      dbml
-        .escapeSpaces(foreignTable[TableName])
-        .insert('.')
-        .insert(wrapColumns(foreignColumns, this.buildQueryConfig.escapeName));
-
-      const actions: string[] = [
-        `delete: ${fks[i].onDelete || 'no action'}`,
-        `update: ${fks[i].onUpdate || 'no action'}`
-      ];
-      const actionsStr = ` [${formatList(actions, this.buildQueryConfig.escapeName)}]`;
-
-      dbml.insert(actionsStr);
-      this.generatedRefs.push(dbml.build());
+      // Mermaid FK relationship: referenced table ||--o{ source table
+      this.generatedRelationships.push(
+        new MermaidBuilder()
+          .relationship(foreignName, "||", "o{", sourceName, fkName)
+          .build()
+          .trim(),
+      );
     }
   }
 
+  /**
+   * Generate Mermaid relationship lines from Drizzle Relations API.
+   */
   private generateRelations(relations_: Relations[]) {
     const left: Record<
       string,
       {
-        type: 'one' | 'many';
-        sourceSchema?: string;
-        sourceTable?: string;
+        type: "one" | "many";
+        sourceEntity?: string;
         sourceColumns?: string[];
-        foreignSchema?: string;
-        foreignTable?: string;
+        foreignEntity?: string;
         foreignColumns?: string[];
       }
     > = {};
@@ -289,80 +326,71 @@ export abstract class BaseGenerator<
     for (let i = 0; i < relations_.length; i++) {
       const relations = relations_[i].config({
         one: createOne(relations_[i].table),
-        many: createMany(relations_[i].table)
+        many: createMany(relations_[i].table),
       });
 
       for (const relationName in relations) {
         const relation = relations[relationName];
-        const tableNames: string[] = [
-          (relations_[i].table as unknown as AnyTable)[TableName],
-          relation.referencedTableName
-        ].sort();
+        const sourceTable = relations_[i].table as unknown as AnyTable;
+        const sourceEntity = this.getEntityName(sourceTable);
+        const foreignEntity = sanitizeName(relation.referencedTableName);
+
+        const tableNames: string[] = [sourceTable[TableName], relation.referencedTableName].sort();
         const key = `${tableNames[0]}-${tableNames[1]}${
-          relation.relationName ? `-${relation.relationName}` : ''
+          relation.relationName ? `-${relation.relationName}` : ""
         }`;
 
-        if ((is(relation, One) && relation.config?.references.length) || 0 > 0) {
+        if ((is(relation, One) && relation.config?.references.length) || false) {
           left[key] = {
-            type: 'one',
-            sourceSchema: (relation.sourceTable as unknown as AnyTable)[Schema],
-            sourceTable: (relation.sourceTable as unknown as AnyTable)[TableName],
+            type: "one",
+            sourceEntity,
             sourceColumns: (relation as One).config?.fields.map((col) => col.name) || [],
-            foreignSchema: (relation.referencedTable as unknown as AnyTable)[Schema],
-            foreignTable: relation.referencedTableName,
-            foreignColumns: (relation as One).config?.references.map((col) => col.name) || []
+            foreignEntity,
+            foreignColumns: (relation as One).config?.references.map((col) => col.name) || [],
           };
         } else {
           right[key] = {
-            type: is(relation, One) ? 'one' : 'many'
+            type: is(relation, One) ? "one" : "many",
           };
         }
       }
     }
 
     for (const key in left) {
-      const sourceSchema = left[key].sourceSchema || '';
-      const sourceTable = left[key].sourceTable || '';
-      const foreignSchema = left[key].foreignSchema || '';
-      const foreignTable = left[key].foreignTable || '';
+      const sourceEntity = left[key].sourceEntity || "";
+      const foreignEntity = left[key].foreignEntity || "";
       const sourceColumns = left[key].sourceColumns || [];
       const foreignColumns = left[key].foreignColumns || [];
-      const relationType = right[key]?.type || 'one';
+      const relationType = right[key]?.type || "one";
 
       if (sourceColumns.length === 0 || foreignColumns.length === 0) {
-        throw Error(
-          `Not enough information was provided to create relation between "${sourceTable}" and "${foreignTable}"`
+        throw new Error(
+          `Not enough information was provided to create relation between "${sourceEntity}" and "${foreignEntity}"`,
         );
       }
 
-      const dbml = new DBML().insert('ref: ');
+      // Determine cardinality based on relation type
+      // For one-to-one: source ||--|| foreign
+      // For one-to-many: source ||--o{ foreign (source is "one", foreign is "many")
+      let leftCard = "||";
+      let rightCard = relationType === "one" ? "||" : "o{";
 
-      if (sourceSchema) {
-        dbml.escapeSpaces(sourceSchema).insert('.');
-      }
+      // Source table (with fields) goes on left, referenced table on right
+      const relationship = new MermaidBuilder()
+        .relationship(sourceEntity, leftCard, rightCard, foreignEntity, key)
+        .build()
+        .trim();
 
-      dbml
-        .escapeSpaces(sourceTable)
-        .insert('.')
-        .insert(wrapColumnNames(sourceColumns, this.buildQueryConfig.escapeName))
-        .insert(` ${relationType === 'one' ? '-' : '>'} `);
-
-      if (foreignSchema) {
-        dbml.escapeSpaces(foreignSchema).insert('.');
-      }
-
-      dbml
-        .escapeSpaces(foreignTable)
-        .insert('.')
-        .insert(wrapColumnNames(foreignColumns, this.buildQueryConfig.escapeName));
-
-      this.generatedRefs.push(dbml.build());
+      this.generatedRelationships.push(relationship);
     }
   }
 
+  /**
+   * Main generation method - produces the complete Mermaid ER diagram.
+   */
   public generate() {
     const generatedEnums: string[] = [];
-    const generatedTables: string[] = [];
+    const generatedEntities: string[] = [];
     const relations: Relations[] = [];
 
     for (const key in this.schema) {
@@ -371,7 +399,7 @@ export abstract class BaseGenerator<
       if (isPgEnum(value)) {
         generatedEnums.push(this.generateEnum(value));
       } else if (is(value, PgTable) || is(value, MySqlTable) || is(value, SQLiteTable)) {
-        generatedTables.push(this.generateTable(value as unknown as AnyTable));
+        generatedEntities.push(this.generateTable(value as unknown as AnyTable).entity);
       } else if (is(value, Relations)) {
         relations.push(value);
       }
@@ -381,23 +409,34 @@ export abstract class BaseGenerator<
       this.generateRelations(relations);
     }
 
-    const dbml = new DBML()
-      .concatAll(generatedEnums)
-      .concatAll(generatedTables)
-      .concatAll(this.generatedRefs)
-      .build();
+    const builder = new MermaidBuilder();
+    builder.header();
 
-    return dbml;
+    for (const entity of generatedEntities) {
+      builder.newLine().insert(entity);
+    }
+
+    if (this.generatedRelationships.length > 0) {
+      builder.newLine();
+      for (const rel of this.generatedRelationships) {
+        builder.insert(rel).insert("\n");
+      }
+    }
+
+    return builder.build();
   }
 }
 
-export function writeDBMLFile(dbml: string, outPath: string) {
+/**
+ * Write the generated Mermaid string to a file.
+ */
+export function writeMermaidFile(mermaid: string, outPath: string) {
   const path = resolve(process.cwd(), outPath);
 
   try {
-    writeFileSync(path, dbml, { encoding: 'utf-8' });
+    writeFileSync(path, mermaid, { encoding: "utf-8" });
   } catch (err) {
-    console.error('An error ocurred while writing the generated DBML');
+    console.error("An error occurred while writing the generated Mermaid");
     throw err;
   }
 }

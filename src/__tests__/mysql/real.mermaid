@@ -1,0 +1,28 @@
+erDiagram
+
+    users {
+        serial id PK "not null, increment"
+        timestamp registered_at "not null, default: `(now())`"
+        varchar username UK "not null"
+        text bio
+        boolean has_blue "not null, default: false"
+    }
+    followers {
+        int user_id PK, FK "not null"
+        int follows_user_id PK, FK "not null"
+    }
+    tweets {
+        serial id PK "not null, increment"
+        timestamp posted_at "not null, default: `(now())`"
+        text content "not null"
+        int posted_by_id FK "not null"
+    }
+    likes {
+        int liked_tweet_id PK, FK "not null"
+        int liked_by_id PK, FK "not null"
+    }
+users ||--o{ followers : "followers_user_id_users_id_fk"
+users ||--o{ followers : "followers_follows_user_id_users_id_fk"
+users ||--o{ tweets : "tweets_posted_by_id_users_id_fk"
+tweets ||--o{ likes : "likes_liked_tweet_id_tweets_id_fk"
+users ||--o{ likes : "likes_liked_by_id_users_id_fk"

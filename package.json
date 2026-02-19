@@ -1,44 +1,68 @@
 {
-  "name": "drizzle-dbml-generator",
-  "version": "0.10.0",
-  "description": "Convert your Drizzle ORM schema into DBML markup",
-  "main": "dist/index.cjs",
-  "module": "dist/index.js",
-  "typings": "dist/index.d.ts",
-  "type": "module",
-  "scripts": {
-    "build": "npx tsup src/index.ts --format cjs,esm --dts",
-    "fmt": "npx prettier --write .",
-    "lint": "npx eslint . && npx tsc --noEmit",
-    "test:all": "npx vitest run --dir src/__tests__",
-    "test:pg": "npx vitest run --dir src/__tests__/pg",
-    "test:mysql": "npx vitest run --dir src/__tests__/mysql",
-    "test:sqlite": "npx vitest run --dir src/__tests__/sqlite"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/L-Mario564/drizzle-dbml-generator.git"
-  },
+  "name": "drizzle-mermaid-generator",
+  "version": "0.0.1",
+  "description": "Convert your Drizzle ORM schema into Mermaid ER diagrams",
+  "packageManager": "bun@1.3.9",
   "keywords": [
     "drizzle-orm",
-    "dbml",
+    "er-diagram",
+    "mermaid",
     "typescript"
   ],
-  "author": "Mario564",
   "license": "MIT",
+  "author": "Mario564",
+  "maintainers": [
+    "panudetjt"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/panudetjt/drizzle-mermaid-generator.git"
+  },
+  "type": "module",
+  "main": "dist/index.cjs",
+  "module": "dist/index.mjs",
+  "typings": "dist/index.d.mts",
+  "bin": {
+    "drizzle-mermaid-generator": "./dist/cli.cjs"
+  },
+  "exports": {
+    ".": {
+      "import": {
+        "types": "./dist/index.d.mts",
+        "default": "./dist/index.mjs"
+      },
+      "require": {
+        "types": "./dist/index.d.cts",
+        "default": "./dist/index.cjs"
+      }
+    },
+    "./cli": "./dist/cli.cjs"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "build": "tsdown src/index.ts src/cli.ts --format cjs,esm --dts",
+    "build:cli": "tsdown src/cli.ts --format cjs --dts false",
+    "fmt": "oxfmt",
+    "fmt:check": "oxfmt --check",
+    "lint": "oxlint",
+    "lint:fix": "oxlint --fix",
+    "test:all": "vitest run --dir src/__tests__",
+    "test:pg": "vitest run --dir src/__tests__/pg",
+    "test:mysql": "vitest run --dir src/__tests__/mysql",
+    "test:sqlite": "vitest run --dir src/__tests__/sqlite",
+    "validate:mermaid": "bun run scripts/validate-mermaid.ts",
+    "validate:mermaid:shell": "for f in src/__tests__/*/*.mermaid; do bunx -p @mermaid-js/mermaid-cli mmdc -i \"$f\" -o /tmp/test.svg -q || exit 1; done && echo 'All Mermaid files valid'"
+  },
   "devDependencies": {
-    "@types/node": "^20.5.6",
-    "@typescript-eslint/eslint-plugin": "^6.4.1",
-    "@typescript-eslint/parser": "^6.4.1",
-    "drizzle-orm": "^0.38.0",
-    "eslint": "^8.47.0",
-    "eslint-config-prettier": "^9.0.0",
-    "prettier": "^3.0.2",
-    "tsup": "^7.2.0",
-    "typescript": "^5.2.2",
-    "vitest": "^0.34.3"
+    "@types/bun": "^1.3.9",
+    "drizzle-orm": "^0.45.1",
+    "oxfmt": "^0.33.0",
+    "oxlint": "^1.48.0",
+    "tsdown": "^0.20.3",
+    "typescript": "^5.9.3",
+    "vitest": "^4.0.18"
   },
   "peerDependencies": {
-    "drizzle-orm": ">=0.36.0"
+    "drizzle-orm": ">=0.45.1"
   }
 }

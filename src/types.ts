@@ -1,14 +1,14 @@
-import type { AnyColumn, Table, Relations } from 'drizzle-orm';
-import type { ForeignKey, Index, PgEnum, PrimaryKey, UniqueConstraint } from 'drizzle-orm/pg-core';
+import type { AnyColumn, Table, Relations } from "drizzle-orm";
+import type { ForeignKey, Index, PgEnum, PrimaryKey, UniqueConstraint } from "drizzle-orm/pg-core";
 import type {
   AnyInlineForeignKeys,
   TableName,
   Schema as SchemaSymbol,
   ExtraConfigBuilder,
-  ExtraConfigColumns
-} from './symbols';
+  ExtraConfigColumns,
+} from "./symbols";
 
-export type AnyTable = Table['_']['columns'] & {
+export type AnyTable = Table["_"]["columns"] & {
   [AnyInlineForeignKeys]: ForeignKey[];
   [TableName]: string;
   [SchemaSymbol]: string | undefined;
