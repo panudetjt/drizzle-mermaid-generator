@@ -3,5 +3,4 @@ dist
 *.generated.mermaid
 
 .claude
-.chief
 CLAUDE.md
