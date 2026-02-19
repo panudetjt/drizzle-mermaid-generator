@@ -1,6 +1,6 @@
 {
   "name": "drizzle-mermaid-generator",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "description": "Convert your Drizzle ORM schema into Mermaid ER diagrams",
   "packageManager": "bun@1.3.9",
   "keywords": [
@@ -52,6 +52,9 @@
     "test:sqlite": "vitest run --dir src/__tests__/sqlite",
     "validate:mermaid": "bun run scripts/validate-mermaid.ts",
     "validate:mermaid:shell": "for f in src/__tests__/*/*.mermaid; do bun x mmdc -i \"$f\" -o /tmp/test.svg -q || exit 1; done && echo 'All Mermaid files valid'"
+  },
+  "dependencies": {
+    "jiti": "^2.4.2"
   },
   "devDependencies": {
     "@mermaid-js/mermaid-cli": "^11.4.0",
