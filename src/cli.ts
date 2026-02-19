@@ -2,8 +2,9 @@
 import { pgGenerate, mysqlGenerate, sqliteGenerate } from "./generators";
 import { loadSchema } from "./loader";
 import { resolve } from "node:path";
+import pkg from "../package.json" with { type: "json" };
 
-const PACKAGE_VERSION = "0.0.1";
+const { version: PACKAGE_VERSION } = pkg;
 
 interface CliArgs {
 	dialect: "pg" | "mysql" | "sqlite" | null;
@@ -111,7 +112,7 @@ async function main(): Promise<void> {
 
 		const options = {
 			schema,
-			out: args.out,
+			out: args.out ?? undefined,
 			relational: args.relational,
 		};
 
