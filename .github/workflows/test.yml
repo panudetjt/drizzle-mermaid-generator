@@ -34,6 +34,14 @@ jobs:
       - name: Install Dependencies
         run: bun install --frozen-lockfile
 
+      - name: Setup Chrome for Puppeteer
+        uses: browser-actions/setup-chrome@v1
+        with:
+          chrome: stable
+
+      - name: Configure Puppeteer
+        run: echo '{"executablePath":"/opt/google/chrome/chrome","args":["--no-sandbox","--disable-gpu","--disable-dev-shm-usage"]}' > puppeteer-config.json
+
       - name: Lint
         run: npm run lint
 

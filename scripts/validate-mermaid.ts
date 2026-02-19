@@ -1,5 +1,6 @@
 #!/usr/bin/env bun
 import { spawn } from "node:child_process";
+import { existsSync } from "node:fs";
 import { cpus } from "node:os";
 import { Glob } from "bun";
 
@@ -24,9 +25,14 @@ async function validateFileWithMmdc(filePath: string, timeout: number): Promise<
 	const start = Date.now();
 
 	return new Promise((resolve) => {
+		// Use puppeteer config if available (for CI environments)
+		const puppeteerConfig = existsSync("puppeteer-config.json")
+			? ["-p", "puppeteer-config.json"]
+			: [];
+
 		const proc = spawn(
 			"bun",
-			["x", "mmdc", "-i", filePath, "-o", "/tmp/test.svg", "-q"],
+			["x", "mmdc", "-i", filePath, "-o", "/tmp/test.svg", "-q", ...puppeteerConfig],
 			{
 				timeout,
 				shell: true,
