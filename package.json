@@ -51,9 +51,10 @@
     "test:mysql": "vitest run --dir src/__tests__/mysql",
     "test:sqlite": "vitest run --dir src/__tests__/sqlite",
     "validate:mermaid": "bun run scripts/validate-mermaid.ts",
-    "validate:mermaid:shell": "for f in src/__tests__/*/*.mermaid; do bunx -p @mermaid-js/mermaid-cli mmdc -i \"$f\" -o /tmp/test.svg -q || exit 1; done && echo 'All Mermaid files valid'"
+    "validate:mermaid:shell": "for f in src/__tests__/*/*.mermaid; do bun x mmdc -i \"$f\" -o /tmp/test.svg -q || exit 1; done && echo 'All Mermaid files valid'"
   },
   "devDependencies": {
+    "@mermaid-js/mermaid-cli": "^11.4.0",
     "@types/bun": "^1.3.9",
     "drizzle-orm": "^0.45.1",
     "oxfmt": "^0.33.0",

@@ -25,8 +25,8 @@ async function validateFileWithMmdc(filePath: string, timeout: number): Promise<
 
 	return new Promise((resolve) => {
 		const proc = spawn(
-			"bunx",
-			["-p", "@mermaid-js/mermaid-cli", "mmdc", "-i", filePath, "-o", "/tmp/test.svg", "-q"],
+			"bun",
+			["x", "mmdc", "-i", filePath, "-o", "/tmp/test.svg", "-q"],
 			{
 				timeout,
 				shell: true,
